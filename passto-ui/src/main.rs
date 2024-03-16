@@ -1,21 +1,20 @@
 use crate::app::PasstoApp;
-
 mod app;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
-    env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
+    env_logger::init();
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_resizable(false)
-            .with_inner_size([600.0, 180.0]),
+            .with_min_inner_size([600.0, 250.0]),
         ..Default::default()
     };
     eframe::run_native(
         "Passto",
         native_options,
-        Box::new(|_| Box::new(PasstoApp::default())),
+        Box::new(|_| Box::<PasstoApp>::default()),
     )
 }
 
