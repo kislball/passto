@@ -1,3 +1,4 @@
+use std::time;
 use eframe::{App, Frame};
 use egui::{Color32, ComboBox, Context, Grid, RichText, TextEdit, Ui};
 use log::error;
@@ -13,6 +14,8 @@ pub struct PasstoApp {
     pub zip_raw: String,
     pub max_length_raw: String,
     pub custom_alphabet: String,
+    pub hashing_iterations: String,
+    pub salting_iterations: String,
 }
 
 impl PasstoApp {
@@ -97,6 +100,10 @@ impl PasstoApp {
                 );
             });
         ui.end_row();
+        
+        ui.label("Salting iterations");
+        ui.text_edit_singleline(&mut self.salting_iterations);
+        ui.end_row();
     }
 
     fn hashing_row(&mut self, ui: &mut Ui) {
@@ -109,6 +116,10 @@ impl PasstoApp {
                 ui.selectable_value(&mut self.settings.hashing, HashingAlgorithm::Sha256, "SHA256");
                 ui.selectable_value(&mut self.settings.hashing, HashingAlgorithm::Sha512, "SHA512");
             });
+        ui.end_row();
+        
+        ui.label("Hashing iterations");
+        ui.text_edit_singleline(&mut self.hashing_iterations);
         ui.end_row();
     }
 
@@ -178,7 +189,15 @@ impl PasstoApp {
     }
 
     fn output_password(&mut self, ui: &mut Ui, frame: &mut Frame) {
+        self.settings.hashing_iterations = self.hashing_iterations.parse().unwrap_or(1);
+        self.settings.salting_iterations = self.salting_iterations.parse().unwrap_or(1);
+        
+        let begin = time::Instant::now();
         let password = encode(self.salt.as_bytes(), self.password.as_bytes(), &self.settings);
+        let end = time::Instant::now();
+        
+        let duration = end - begin;
+        
         let possible_error = self.resolve_error(&password);
         
         if let Some(err) = possible_error {
@@ -191,7 +210,7 @@ impl PasstoApp {
         } else {
             ui.horizontal(|ui| {
                 let password = password.unwrap();
-                ui.label("Output");
+                ui.label(format!("Output({duration:?}): "));
                 
                 if !frame.is_web() && ui.button("Copy").clicked() {
                     ui.output_mut(|ui| {

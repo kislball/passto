@@ -132,7 +132,7 @@ pub fn digest(digest_algorithm: &DigestAlgorithm, data: &[u8]) -> Result<String>
     }
 }
 
-#[must_use] pub fn hash(hashing_algorithm: &HashingAlgorithm, data: &[u8]) -> Vec<u8> {
+pub fn hash(hashing_algorithm: &HashingAlgorithm, data: &[u8]) -> Vec<u8> {
     match hashing_algorithm {
         HashingAlgorithm::Sha256 => {
             let mut hasher = Sha256::new();
@@ -147,7 +147,7 @@ pub fn digest(digest_algorithm: &DigestAlgorithm, data: &[u8]) -> Result<String>
     }
 }
 
-#[must_use] pub fn salt(salting_algorithm: &SaltingAlgorithm, data: &[u8], salt: &[u8]) -> Vec<u8> {
+pub fn salt(salting_algorithm: &SaltingAlgorithm, data: &[u8], salt: &[u8]) -> Vec<u8> {
     match salting_algorithm {
         SaltingAlgorithm::Append => {
             let mut res = Vec::with_capacity(data.len() + salt.len());

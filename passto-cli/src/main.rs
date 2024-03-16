@@ -1,8 +1,9 @@
 use core::fmt::Display;
 use core::iter::repeat;
 use std::process;
+use std::time::Instant;
 use clap::Parser;
-use log::error;
+use log::{error, info, LevelFilter};
 use passto::{AlgorithmSettings, DigestAlgorithm, encode, HashingAlgorithm, SaltingAlgorithm};
 use rand::RngCore;
 
@@ -49,7 +50,10 @@ struct Args {
     #[arg(long)]
     salt: Option<String>,
     /// Code name for your password
-    service: String,
+    service: Option<String>,
+    /// Output generation time
+    #[arg(long, default_value_t = false)]
+    time: bool,
 }
 
 fn build_settings(args: &Args) -> AlgorithmSettings {
@@ -87,15 +91,27 @@ fn build_settings(args: &Args) -> AlgorithmSettings {
     settings
 }
 
+fn get_service(args: &Args) -> Vec<u8> {
+    if let Some(str) = &args.service {
+        str.as_bytes().to_vec()
+    } else {
+        get_random_bytes()
+    }
+}
+
 fn get_salt(args: &Args) -> Vec<u8> {
     if let Some(str) = &args.salt {
-        return str.as_bytes().to_vec()
+        str.as_bytes().to_vec()
     } else {
-        let mut buf = repeat(0u8).take(32).collect::<Vec<u8>>();
-        let mut rng = rand::thread_rng();
-        rng.fill_bytes(&mut buf);
-        buf
+        get_random_bytes()
     }
+}
+
+fn get_random_bytes() -> Vec<u8> {
+    let mut buf = repeat(0u8).take(32).collect::<Vec<u8>>();
+    let mut rng = rand::thread_rng();
+    rng.fill_bytes(&mut buf);
+    buf
 }
 
 fn handle_res<T: Display>(r: passto::Result<T>) {
@@ -110,16 +126,21 @@ fn handle_res<T: Display>(r: passto::Result<T>) {
 
 fn main() {
     env_logger::builder()
+        .filter_level(LevelFilter::Debug)
         .format_target(false)
         .format_timestamp(None)
         .init();
-    
+
     let args = Args::parse();
 
     let settings = build_settings(&args);
     let salt = get_salt(&args);
+    let service = get_service(&args);
 
-    let service = args.service.as_bytes();
-
-    handle_res(encode(&salt, service, &settings));
+    let begin = Instant::now();
+    handle_res(encode(&salt, &service, &settings));
+    
+    if args.time {
+        info!("Finished in {:?}", Instant::now() - begin);
+    }
 }
