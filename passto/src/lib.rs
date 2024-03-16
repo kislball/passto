@@ -189,7 +189,7 @@ pub fn encode(passphrase: &[u8], code: &[u8], settings: &AlgorithmSettings) -> R
     let mut hashed = hash(&settings.hashing, &salted);
 
     for _ in 1..settings.hashing_iterations {
-        hashed = hash(&settings.hashing, &salted);
+        hashed = hash(&settings.hashing, &hashed);
     }
 
     let digested = digest(&settings.digest, &hashed)?;
